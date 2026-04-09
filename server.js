@@ -20,16 +20,19 @@ initSocket(httpServer)
 // ─── Middleware ───────────────────────────────────────────────────────────────
 const allowedOrigins = [
   process.env.FRONTEND_URL || 'http://localhost:5173',
+  'http://localhost:5173',
   'http://localhost:3000',
 ]
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow requests with no origin — n8n HTTP Request node, curl, Postman
+    // Allow requests with no origin (n8n, curl, Postman — server-to-server)
     if (!origin) return callback(null, true)
-    // Allow known frontend origins
+    // Allow explicitly listed origins
     if (allowedOrigins.includes(origin)) return callback(null, true)
-    // Allow all ngrok tunnels so n8n can reach the server regardless of tunnel URL
+    // Allow all Vercel preview + production deployments
+    if (origin.endsWith('.vercel.app')) return callback(null, true)
+    // Allow all ngrok tunnels for n8n webhooks
     if (origin.endsWith('.ngrok-free.app') || origin.endsWith('.ngrok.io')) {
       return callback(null, true)
     }

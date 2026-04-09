@@ -9,8 +9,20 @@ let io = null
 function initSocket(httpServer) {
   io = new Server(httpServer, {
     cors: {
-      origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+      origin: (origin, callback) => {
+        if (!origin) return callback(null, true)
+        const allowedOrigins = [
+          process.env.FRONTEND_URL || 'http://localhost:5173',
+          'http://localhost:5173',
+          'http://localhost:3000',
+        ]
+        if (allowedOrigins.includes(origin)) return callback(null, true)
+        if (origin.endsWith('.vercel.app')) return callback(null, true)
+        if (origin.endsWith('.ngrok-free.app') || origin.endsWith('.ngrok.io')) return callback(null, true)
+        callback(new Error(`Socket.io CORS: origin ${origin} not allowed`))
+      },
       methods: ['GET', 'POST'],
+      credentials: true,
     },
   })
 
